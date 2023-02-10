@@ -16,14 +16,9 @@ import subprocess
 from pydub import AudioSegment
 from fastapi.responses import HTMLResponse
 from nepalimodel import load_model
-
 #####################import for custom model############################################
 from ownmodel.predict import get_transcript
 from ownmodel.configs import UNQ_CHARS
-
-
-
-
 app = FastAPI()
 
 origins = [
@@ -37,9 +32,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-@app.get("/")
-async def root():
-    return {"message": "Hello World"}
+# @app.get("/")
+# async def root():
+#     return {"message": "Hello World"}
     
     
 # endpoint for textinput
@@ -47,11 +42,15 @@ class text(BaseModel):
     texts: str
 @app.post("/input-text")
 async def create_upload_text(data: text):
-    with open('static/input-text/input.txt', 'w',encoding="utf-8") as f:
-        f.write(data.texts)
-    filepath='static/input-text/input.txt'
-    summary=get_summary_from_text_file(filepath)
-    return summary
+    try:
+        with open('static/input-text/input.txt', 'w',encoding="utf-8") as f:
+            f.write(data.texts)
+        filepath='static/input-text/input.txt'
+        summary=get_summary_from_text_file(filepath)
+        os.remove(filepath)
+        return summary
+    except:
+        return {"Server Crashed"}
         
 ## load the model and processor 
 @app.post("/loadmodel")  
@@ -84,59 +83,51 @@ async def create_upload_file(text: UploadFile = File(...)):
 ##########################################################################################################
       
 @app.post("/audio")
-def create_upload_file(audio: UploadFile = File(...)):       
-    ext=audio.filename.split('.').pop()        
-    file_location = f"static/audio/{uuid.uuid1()}{audio.filename}"
-    with open(file_location, "wb+") as file_object:
-        file_object.write(audio.file.read())   
-    if ext == 'wav' or ext == 'flac':         
-        transcript=predict_from_speech(file_location)
-        os.remove(file_location)
-    else:
-        dest_path=f'static/audio/{uuid.uuid1()}coverted.flac'    
-        command = f'ffmpeg -i {file_location} {dest_path}'
-        subprocess.call(command,shell=True)  
-        transcript=predict_from_speech(dest_path)
-        os.remove(dest_path)
-        os.remove(file_location)
-    return transcript
+def create_upload_file(audio: UploadFile = File(...)):
+    try:      
+        ext=audio.filename.split('.').pop()        
+        file_location = f"static/audio/{uuid.uuid1()}{audio.filename}"
+        with open(file_location, "wb+") as file_object:
+            file_object.write(audio.file.read())   
+        if ext == 'wav' or ext == 'flac':         
+            transcript=predict_from_speech(file_location)
+            os.remove(file_location)
+        else:
+            dest_path=f'static/audio/{uuid.uuid1()}coverted.flac'    
+            command = f'ffmpeg -i {file_location} {dest_path}'
+            subprocess.call(command,shell=True)  
+            transcript=predict_from_speech(dest_path)
+            os.remove(dest_path)
+            os.remove(file_location)
+        return transcript
+    except:
+        return {"Server Crashed"}
     
     
 @app.post("/audio_live")
 async def create_upload_file(audio: UploadFile = File(...)):    
-    ext=audio.filename.split('.').pop()
-    
-    # if(ext=='wav'):
-    #     song = AudioSegment.from_wav(audio.filename)
-    #     song.export("testme.flac",format = "flac")
-        
-    
-    file_location = f"static/audio/{uuid.uuid1()}{audio.filename}"
-    
-    with open(file_location, "wb+") as file_object:
-        file_object.write(audio.file.read())
-    dest_path=f'static/audio/{uuid.uuid1()}testme.flac'    
-    command = f'ffmpeg -i {file_location} {dest_path}'
-    subprocess.call(command,shell=True)    
-    transcript=predict_from_speech(dest_path)
-    if os.path.exists(dest_path):    
-        print(dest_path)
-    os.remove(dest_path)
-    os.remove(file_location)
-    return transcript
+    try:
+        ext=audio.filename.split('.').pop()
+        file_location = f"static/audio/{uuid.uuid1()}{audio.filename}"
+        with open(file_location, "wb+") as file_object:
+            file_object.write(audio.file.read())
+        dest_path=f'static/audio/{uuid.uuid1()}testme.flac'    
+        command = f'ffmpeg -i {file_location} {dest_path}'
+        subprocess.call(command,shell=True)    
+        transcript=predict_from_speech(dest_path)
+        if os.path.exists(dest_path):    
+            print(dest_path)
+        os.remove(dest_path)
+        os.remove(file_location)
+        return transcript
+    except:
+        return {"Server Crashed"}
     
     # return audio  
 @app.post("/audio_live_own")
 async def create_upload_file(audio: UploadFile = File(...)):    
     ext=audio.filename.split('.').pop()
-    
-    # if(ext=='wav'):
-    #     song = AudioSegment.from_wav(audio.filename)
-    #     song.export("testme.flac",format = "flac")
-        
-    
     file_location = f"static/audio/{uuid.uuid1()}{audio.filename}"
-    
     with open(file_location, "wb+") as file_object:
         file_object.write(audio.file.read())
     dest_path=f'static/audio/{uuid.uuid1()}testme.flac'    
