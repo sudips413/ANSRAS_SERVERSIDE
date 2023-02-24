@@ -32,9 +32,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-# @app.get("/")
-# async def root():
-#     return {"message": "Hello World"}
+
     
     
 # endpoint for textinput
@@ -101,7 +99,7 @@ def create_upload_file(audio: UploadFile = File(...)):
             os.remove(file_location)
         return transcript
     except:
-        return {"Server Crashed"}
+        return "fail"
     
     
 @app.post("/audio_live")
