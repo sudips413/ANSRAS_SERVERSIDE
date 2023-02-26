@@ -20,10 +20,11 @@ from nepalimodel import load_model
 from ownmodel.predict import get_transcript
 from ownmodel.configs import UNQ_CHARS
 app = FastAPI()
+##############################3
 
 origins = [
-    "http://localhost:3000",
-    "http://localhost:8000",
+    "*",
+    
 ]
 app.add_middleware(
     CORSMiddleware,
@@ -48,7 +49,7 @@ async def create_upload_text(data: text):
         os.remove(filepath)
         return summary
     except:
-        return {"Server Crashed"}
+        return "fail"
         
 ## load the model and processor 
 @app.post("/loadmodel")  
@@ -60,8 +61,7 @@ async def loadthemodels():
 ############################################################################################################
 @app.post("/text")
 async def create_upload_file(text: UploadFile = File(...)):
-    ext=text.filename.split('.').pop()
-    if ext == 'txt':          
+    try:       
         file_location = f"static/text/{uuid.uuid1()}{text.filename}"
         with open(file_location, "wb+") as file_object:
             file_object.write(text.file.read())
@@ -73,8 +73,8 @@ async def create_upload_file(text: UploadFile = File(...)):
         # return JSONResponse(content={"summary": summary})
          
         
-    else:
-        return {"Summary not found! Please upload a text file"}  
+    except:
+        return "fail"
 
 
 #endpoint for audioinput
@@ -119,22 +119,25 @@ async def create_upload_file(audio: UploadFile = File(...)):
         os.remove(file_location)
         return transcript
     except:
-        return {"Server Crashed"}
+        return "couldnot handle the request, Try Again!"
     
     # return audio  
 @app.post("/audio_live_own")
-async def create_upload_file(audio: UploadFile = File(...)):    
-    ext=audio.filename.split('.').pop()
-    file_location = f"static/audio/{uuid.uuid1()}{audio.filename}"
-    with open(file_location, "wb+") as file_object:
-        file_object.write(audio.file.read())
-    dest_path=f'static/audio/{uuid.uuid1()}testme.flac'    
-    command = f'ffmpeg -i {file_location} {dest_path}'
-    subprocess.call(command,shell=True)    
-    transcript= get_transcript(dest_path)
-    os.remove(dest_path)
-    os.remove(file_location)
-    return transcript     
+async def create_upload_file(audio: UploadFile = File(...)):
+    # try:    
+        ext=audio.filename.split('.').pop()
+        file_location = f"static/audio/{uuid.uuid1()}{audio.filename}"
+        with open(file_location, "wb+") as file_object:
+            file_object.write(audio.file.read())
+        dest_path=f'static/audio/{uuid.uuid1()}testme.flac'    
+        command = f'ffmpeg -i {file_location} {dest_path}'
+        subprocess.call(command,shell=True)    
+        transcript= get_transcript(dest_path)
+        os.remove(dest_path)
+        os.remove(file_location)
+        return transcript     
+    # except:
+    #     return "couldnot handle the request, Try Again!"
 
         
 
