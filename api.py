@@ -6,6 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from uuid import UUID
 from os.path import splitext
 from nepalimodel.predict import predict_from_speech
+from abstractive import abstractive_predict
 from pydub import AudioSegment
 from pythonfiles.main import get_summary_from_text_file
 from pythonfiles import tokenizer
@@ -55,6 +56,7 @@ async def create_upload_text(data: text):
 @app.post("/loadmodel")  
 async def loadthemodels():
     load_model.loadModelInitial()
+    abstractive_predict.load_model()
     return True
     
 #endpoint for fileinput-text
@@ -138,7 +140,15 @@ async def create_upload_file(audio: UploadFile = File(...)):
         return transcript     
     # except:
     #     return "couldnot handle the request, Try Again!"
-
+@app.post("/abstract")
+async def create_upload_text(data: text):    
+    with open('static/input-text/input.txt', 'w',encoding="utf-8") as f:
+        f.write(data.texts)
+    filepath='static/input-text/input.txt'
+    summary=abstractive_predict.abstractive_summarization_from_file(filepath)
+    os.remove(filepath)
+    return summary
+    
         
 
     
