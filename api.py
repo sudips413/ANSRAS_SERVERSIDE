@@ -40,6 +40,10 @@ app.add_middleware(
 # endpoint for textinput
 class text(BaseModel):    
     texts: str
+    
+@app.get("/")
+async def Hello():
+    return "Hello World"
 @app.post("/input-text")
 async def create_upload_text(data: text):
     try:
